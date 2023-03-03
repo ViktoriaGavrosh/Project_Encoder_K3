@@ -1,0 +1,179 @@
+package chucknorris
+
+fun main() {
+    goMenu()
+}
+
+/*launches the menu*/
+fun goMenu() { 
+    val answers = listOf("encode", "decode", "exit")
+   
+    loop@while(true){
+        when(chooseMenu(answers)) {
+            "encode" -> encodeRun()
+            "decode" -> decodeRun()
+            "exit" -> {
+                println("Bye!")
+                break@loop
+             }
+        }
+    }
+}
+
+/*asks to select an operator*/
+fun chooseMenu(answers: List<String>): String { 
+    println("Please input operation (encode/decode/exit):")
+    var choise = ""
+    try {
+        choise = readLine()!!
+        if (choise !in answers) throw Exception()
+        return choise
+    } catch(e: Exception) {
+        println("There is no '${choise}' operation\n")
+        return chooseMenu(answers)
+    }
+}
+ /* part encode */
+ /*start coder*/
+ fun encodeRun() {
+    println("Input string:")
+    val text = readLine()!!
+    println("Encoded string:")
+    
+    val binaryText = toBinaryLine(text)
+    println(collectCode(binaryText).trim())
+    println("")
+}
+
+/*inverts input string to binary*/
+fun toBinaryLine(text: String): String {
+    var result = ""
+    for (i in text) {
+        val intI = i.toInt()
+        result += String.format("%07d", Integer.toBinaryString(intI).toInt())
+    }
+    return result
+}
+
+/*encodes a binary string*/
+fun collectCode(line: String): String {
+    var oneOrZero = line[0]
+    var count = 0
+    var result = ""
+    
+    for (i in line.indices) {
+        if (line[i] == oneOrZero) {
+            count++
+            if (i != line.lastIndex) continue
+        }
+        
+        result += codePart(line[i - 1], count)
+        count = 1
+        
+        if (i == line.lastIndex && line[i] != oneOrZero) {
+            result += codePart(line[i], count)
+        }
+        oneOrZero = line[i]
+    }
+    return result
+}        
+   
+/*encodes one block*/  
+fun codePart(c: Char, count: Int): String {
+    val d = when (c) {
+                    '0' -> "00"
+                    else -> "0"
+                }
+    return " $d ${IntArray(count){0}.joinToString("")}"
+}   
+
+ /* part decode*/
+ /*decoder start*/
+fun decodeRun() {
+    val encodedString = readString()
+    if (encodedString == "") return
+    val binaryString = decoder(encodedString)
+    println("Decoded string:")
+    val binaryPieces = binaryString.chunked(7)
+    println(binaryInString(binaryPieces))
+    println("")
+}
+
+/*read encoded string*/
+fun readString(): String {
+    println("Input encoded string:")
+    var str = ""
+    try {
+        str = readLine()!!
+        checkEncodedString(str)
+        return str
+    } catch(e: Exception) {
+        println("Encoded string is not valid.\n")
+        return ""
+    }
+}
+
+/* check input encoded string*/
+fun checkEncodedString(str: String) {
+    checkIncludChar(str)
+    
+    val strList = str.split(" ")
+    checkFirstBlock(strList)
+    
+    if (strList.size % 2 != 0) throw Exception()
+    
+    checkLength(strList)
+}
+
+/*message includes characters other than 0 or spaces?*/
+fun checkIncludChar(str: String) {
+    for (i in str) if (i != '0' && i != ' ') throw Exception()
+}
+
+/*The first block of each sequence is 0 or 00*/
+fun checkFirstBlock(strList: List<String>) {
+    for (i in strList.indices step 2) if (strList[i] != "0" && strList[i] != "00") throw Exception()
+}
+
+/*The length of the decoded binary string is a multiple of 7?*/
+fun checkLength(strList: List<String>) {
+    var sumLength = 0
+    for (i in 1..strList.size step 2) sumLength += strList[i].length
+    if (sumLength % 7 != 0) throw Exception()
+}
+
+/*inverts binary string to result string*/
+fun binaryInString(list: List<String>): String {
+    var result = ""
+    for (i in list) {
+        result += inUnicode(i).toChar()
+    }
+    return result
+}
+
+/*converts binary number to decimal*/
+fun inUnicode(line: String): Int {
+    var result = 0
+    var twoToPower = 1
+    for (i in line.lastIndex downTo 0) {
+        if (line[i] == '1') result += twoToPower
+        twoToPower *= 2
+    }
+    twoToPower = 1
+    return result
+}
+
+/*converts the code to a binary string*/
+fun decoder(code: String): String {
+    val codeList = code.split(" ")
+    var oneOrZero = "0"
+    var result = ""
+    for (i in codeList.indices) {
+        if (i % 2 == 0) {
+            oneOrZero = if (codeList[i] == "0") "1" else "0"
+            continue
+        }
+        for (j in codeList[i]) result += oneOrZero
+    }
+    return result
+} 
