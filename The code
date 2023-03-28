@@ -1,3 +1,5 @@
+//The program looped to terminate only if the user inputs "exit"
+
 package chucknorris
 
 fun main() {
